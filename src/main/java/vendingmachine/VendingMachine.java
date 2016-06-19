@@ -13,6 +13,18 @@ import vendingmachine.exception.InvalidChange;
 import vendingmachine.exception.InvalidMoney;
 import vendingmachine.model.*;
 
+/**
+* <h1>VendingMachine</h1>
+* This Class creates a Vending Machine
+* We duplicate the behaviour of a physical vending machine
+* It has an inventory of products
+* A safe to collect the money
+* If the price is lower than the insert ammount, it will give change
+*
+* @author  Bruno Pereira
+* @version 1.0
+* @since   2016-06-19
+*/
 public class VendingMachine {
 	private static final Logger LOGGER = LogManager.getLogger(VendingMachine.class.getName());
 	private Map<String,Stock> inventory = new HashMap<String,Stock>();
@@ -26,7 +38,13 @@ public class VendingMachine {
 	public VendingMachine(Money currency) {
 		this.currency = currency;
 	}
-
+	
+	/**
+	 * Selects a product
+	 * @param productId - The unique identifier of a given product
+	 * 
+	 * @return the id of the product or a message saying that the product is unavailable 
+	 */
 	public String selectProduct(String productId){
 		LOGGER.debug("Selecting Product:"+productId);
 		if (inventory.containsKey(productId)){
@@ -39,6 +57,12 @@ public class VendingMachine {
 		return productId + " is unnavailable";
 	}
 	
+	/**
+	 * Increases the ammount of money introduced by the user
+	 * @param denomination - The denomination of the money introduced
+	 * 
+	 * @return the total ammount of money introduced by the user
+	 */
 	public int addMoney(String denomination) throws InvalidMoney{
 		LOGGER.debug("Adding Money:"+denomination);
 		MoneyEnum aux = currency.mapMoney(denomination);
@@ -47,6 +71,11 @@ public class VendingMachine {
 		return insertedValue;		
 	}
 	
+	/**
+	 * Starts the process of getting a product
+	 * 
+	 * @return the product select by the user and the change
+	 */
 	public String getProduct() throws InvalidChange{
 		LOGGER.debug("Get Product");
 		if (insertedValue >= selectedProduct.getValue()){
@@ -57,7 +86,12 @@ public class VendingMachine {
 		return "Insufficient Funds. Product:" + selectedProduct.getId() + " costs:" + selectedProduct.getValue() +
 				". Current inserted value:" + insertedValue;
 	}
-
+	
+	/**
+	 * Returns the money introduced by the user 
+	 * 
+	 * @return the money introduced by the user
+	 */
 	public String resetMoney(){
 		LOGGER.debug("Get Money Back");
 		String response = moneyToString(insertedMoney);
@@ -66,6 +100,10 @@ public class VendingMachine {
 		return response;
 	}
 
+	/**
+	 * Adds stock to the machine inventory
+	 * @param products - A list of RestockObject containing the id, price and quantity to restock
+	 */
 	public void restockProducts(List<RestockObject> products){
 		LOGGER.debug("Restocking products");
 		for(RestockObject product:products){
@@ -78,6 +116,10 @@ public class VendingMachine {
 		}
 	}
 	
+	/**
+	 * Adds Change to the machine 
+	 * @param change - A list of RestockObject containing the denomination, value and quantity to restock
+	 */
 	public void restockChange(List<RestockObject> change) throws InvalidMoney{
 		LOGGER.debug("Restocking change");
 		for(RestockObject money:change){
