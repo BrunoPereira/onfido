@@ -21,11 +21,11 @@ Examples:
 VendingMachine vendingMachine = new VendingMachine (new BritishCoins());
 
 # Assumptions
-The machine when it's constructed doesnt get an initial load. Is empty.
-This means that loading the machine before the first buy is something that the operator has to do, it's not imposed by any restictions. The machine works empty.
-The operator can load the machine at any given time, that won't reset the costumer current process.
-All money introduced by the costumers is stored in a safe.
-The machine only satisfies one customer at a time. If there's more than one, it's treatead as if it was the same.
+- The machine when it's constructed doesnt get an initial load. Is empty.
+- This means that loading the machine before the first buy is something that the operator has to do, it's not imposed by any restictions. The machine works empty.
+- The operator can load the machine at any given time, that won't reset the costumer current process.
+- All money introduced by the costumers is stored in a safe.
+- The machine only satisfies one customer at a time. If there's more than one, it's treated as if it was the same.
 
 # Author
 Bruno Pereira - https://github.com/BrunoPereira
