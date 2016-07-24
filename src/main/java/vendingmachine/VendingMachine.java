@@ -11,8 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import vendingmachine.enumeration.MoneyEnum;
-import vendingmachine.exception.InvalidChange;
-import vendingmachine.exception.InvalidMoney;
+import vendingmachine.exception.*;
 import vendingmachine.model.*;
 
 /**
@@ -78,9 +77,13 @@ public class VendingMachine {
 	 * Starts the process of getting a product
 	 * 
 	 * @return the product select by the user and the change
+	 * @throws InvalidProduct 
 	 */
-	public String getProduct() throws InvalidChange{
+	public String getProduct() throws InvalidChange, InvalidProduct{
 		LOGGER.debug("Get Product");
+		if (selectedProduct == null){
+			throw new InvalidProduct();
+		}
 		if (insertedValue >= selectedProduct.getValue()){
 			String response = "Product:" + selectedProduct.getId() + " Change:" + getChange(insertedValue, selectedProduct.getValue());
 			dispachProduct();			
@@ -106,11 +109,17 @@ public class VendingMachine {
 	/**
 	 * Adds stock to the machine inventory
 	 * @param products - A list of RestockObject containing the id, price and quantity to restock
+	 * @throws InvalidProduct 
 	 */
-	public void restockProducts(List<RestockObject> products){
+	public void restockProducts(List<RestockObject> products) throws InvalidProduct{
 		LOGGER.debug("Restocking products");
 		for(RestockObject product:products){
 			if (!inventory.containsKey(product.getId())){
+				// product.getValue() can be 0, for free products
+				if (product.getId() == null || product.getId().isEmpty() || product.getValue() < 0
+						|| product.getQuantity() <=0){ 
+					throw new InvalidProduct();
+				}
 				inventory.put(product.getId(), new Stock(new Product(product.getId(), product.getValue())));
 			}
 			inventory.get(product.getId()).addStock(product.getQuantity());
@@ -122,11 +131,16 @@ public class VendingMachine {
 	/**
 	 * Adds Change to the machine 
 	 * @param change - A list of RestockObject containing the denomination, value and quantity to restock
+	 * @throws InvalidMoney, InvalidChange 
 	 */
-	public void restockChange(List<RestockObject> change) throws InvalidMoney{
+	public void restockChange(List<RestockObject> change) throws InvalidMoney, InvalidChange{
 		LOGGER.debug("Restocking change");
 		for(RestockObject money:change){
 			if (!availableChange.containsKey(money.getValue())){
+				if (money.getId() == null || money.getId().isEmpty() || money.getValue() <= 0 
+						|| money.getQuantity() <=0){ 
+					throw new InvalidChange();
+				}
 				availableChange.put(money.getValue(), new Change(currency.mapMoney(money.getId())));
 			}
 			availableChange.get(money.getValue()).addStock(money.getQuantity());
