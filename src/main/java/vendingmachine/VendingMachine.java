@@ -1,6 +1,8 @@
 package vendingmachine;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,10 +18,10 @@ import vendingmachine.model.*;
 /**
 * <h1>VendingMachine</h1>
 * This Class creates a Vending Machine
-* We duplicate the behaviour of a physical vending machine
+* We duplicate the behavior of a physical vending machine
 * It has an inventory of products
 * A safe to collect the money
-* If the price is lower than the insert ammount, it will give change
+* If the price is lower than the insert amount, it will give change
 *
 * @author  Bruno Pereira
 * @version 1.0
@@ -29,6 +31,7 @@ public class VendingMachine {
 	private static final Logger LOGGER = LogManager.getLogger(VendingMachine.class.getName());
 	private Map<String,Stock> inventory = new HashMap<String,Stock>();
 	private Map<Integer,Change> availableChange = new HashMap<Integer,Change>();
+	private List<Integer> sortedChange = new ArrayList<Integer>();
 	private Money currency;
 	private Product selectedProduct = null;
 	private int insertedValue = 0;
@@ -58,10 +61,10 @@ public class VendingMachine {
 	}
 	
 	/**
-	 * Increases the ammount of money introduced by the user
+	 * Increases the amount of money introduced by the user
 	 * @param denomination - The denomination of the money introduced
 	 * 
-	 * @return the total ammount of money introduced by the user
+	 * @return the total amount of money introduced by the user
 	 */
 	public int addMoney(String denomination) throws InvalidMoney{
 		LOGGER.debug("Adding Money:"+denomination);
@@ -130,8 +133,9 @@ public class VendingMachine {
 			LOGGER.debug("Change added. denomination:" + money.getId() + " value:" + money.getValue() + 
 					" quantity" + money.getQuantity());
 		}
+		updateSortedChange();
 	}
-	
+
 	private void dispachProduct() {
 		insertedValue = 0;
 		inventory.get(selectedProduct.getId()).decStock();
@@ -142,18 +146,64 @@ public class VendingMachine {
 	
 	private String getChange(int insertedValue, int productValue) throws InvalidChange {
 		int change = insertedValue - productValue;
-		String response = "";
-		if (change > 0 /*&& availableChange.isEmpty()*/){
-			throw new InvalidChange();
-		}
-		/* TODO Take care of change
+		List<MoneyEnum> changeCoins = new ArrayList<MoneyEnum>();
+
 		while( change > 0){
-			
-		}*/
-		
-		return response;
+			try {
+				MoneyEnum coin = getMaxCoinForChange(change);
+				changeCoins.add(coin);
+				change -= coin.getValue();
+			} catch (InvalidChange e) {
+				// The change needs to be kept in the machine
+				List<RestockObject> restock = new ArrayList<RestockObject>();
+				for(MoneyEnum coin:changeCoins){
+					RestockObject aux = new RestockObject(coin.getDenomination(), coin.getValue(), 0);
+					restock.add(aux);
+				}
+				try {
+					restockChange(restock);
+				} catch (InvalidMoney e1) {
+					// Wont happen we're using values that have been inserted already
+				}
+				throw new InvalidChange();
+			}
+		}
+		return moneyToString(changeCoins);
 	}
 	
+	private MoneyEnum getMaxCoinForChange(int change) throws InvalidChange {
+		if (sortedChange.isEmpty()){
+			throw new InvalidChange();
+		}
+		for(Integer coin:sortedChange){
+			if (coin < change){
+				return getAndUpdateAvailableChange(coin);
+			}
+		}
+		throw new InvalidChange();
+	}
+	
+	private MoneyEnum getAndUpdateAvailableChange(Integer coin) {
+		Change maxCoin = availableChange.get(coin);
+		maxCoin.decMoney();
+		if (maxCoin.getQuantity() == 0){
+			availableChange.remove(coin);
+			updateSortedChange();
+		}
+		return maxCoin.getMoney();
+	}
+
+	private void updateSortedChange() {
+		List<Integer> sortedChange = new ArrayList<Integer>();
+		sortedChange.addAll(availableChange.keySet());
+		Collections.sort(sortedChange, new Comparator<Integer>()	{
+			public int compare(Integer o1, Integer o2)	{
+				return o2 - o1; //DESC
+			}
+		});
+		this.sortedChange = sortedChange;
+	}
+
 	private String moneyToString(List<MoneyEnum> wallet) {
 		String response = "";
 		for(MoneyEnum money:wallet){
