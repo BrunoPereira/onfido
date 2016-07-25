@@ -8,7 +8,12 @@ we can create vending machines that accept the new currencies.
 The British coins are: "1p", "2p", "5p", "10p", "20p", "50p", "£1", "£2".
 
 # Restrictions
-Currently it doesn't do change. TODO
+The Change feature has some limitations.
+Ex: 
+- The product costs 4p.
+- The machine has 1 5p coin and 10 2p coins.
+- If the user pays with 10p, we can't give the change.
+- But if the machine only had 10 2p coins, then we can give the correct change.
 
 
 # How to use

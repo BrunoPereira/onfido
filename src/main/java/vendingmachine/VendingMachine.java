@@ -117,7 +117,7 @@ public class VendingMachine {
 			if (!inventory.containsKey(product.getId())){
 				// product.getValue() can be 0, for free products
 				if (product.getId() == null || product.getId().isEmpty() || product.getValue() < 0
-						|| product.getQuantity() <=0){ 
+						|| product.getQuantity() <= 0){ 
 					throw new InvalidProduct();
 				}
 				inventory.put(product.getId(), new Stock(new Product(product.getId(), product.getValue())));
@@ -136,7 +136,7 @@ public class VendingMachine {
 	public void restockChange(List<RestockObject> change) throws InvalidMoney, InvalidChange{
 		LOGGER.debug("Restocking change");
 		for(RestockObject money:change){
-			if (!availableChange.containsKey(money.getValue())){
+			if (!availableChange.containsKey(money.getValue()) || money.getId() == null || money.getId().isEmpty()){
 				if (money.getId() == null || money.getId().isEmpty() || money.getValue() <= 0 
 						|| money.getQuantity() <=0){ 
 					throw new InvalidChange();
@@ -148,6 +148,32 @@ public class VendingMachine {
 					" quantity" + money.getQuantity());
 		}
 		updateSortedChange();
+	}
+	
+	/**
+	 * Returns the stock of a given product
+	 * @param productId - The id from the product from which we want the stock
+	 * @throws InvalidProduct 
+	 */
+	public Stock getProductStock(String productId) throws InvalidProduct{
+		if (!inventory.containsKey(productId)){
+			throw new InvalidProduct();
+		}else{
+			return inventory.get(productId);
+		}
+	}
+	
+	/**
+	 * Returns how many coins of a given value are available for change
+	 * @param value - The value from the coin
+	 * @throws InvalidChange 
+	 */
+	public int getChangeQuantity(int value) throws InvalidChange{
+		if (!availableChange.containsKey(value)){
+			throw new InvalidChange();
+		}else{
+			return availableChange.get(value).getQuantity();
+		}
 	}
 
 	private void dispachProduct() {
@@ -190,7 +216,7 @@ public class VendingMachine {
 			throw new InvalidChange();
 		}
 		for(Integer coin:sortedChange){
-			if (coin < change){
+			if (coin <= change){
 				return getAndUpdateAvailableChange(coin);
 			}
 		}
